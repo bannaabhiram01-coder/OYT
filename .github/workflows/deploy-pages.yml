@@ -14,11 +14,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Upload site artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: './'
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
+      - name: Deploy to gh-pages branch (manual)
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          set -eux
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf out || true
+          mkdir out
+          git ls-files -z | xargs -0 -I{} bash -c 'cp --parents "{}" out || true'
+          cd out
+          git init
+          git checkout -b gh-pages
+          git add -A
+          git commit -m "Deploy to gh-pages: $GITHUB_SHA" || echo "no changes to commit"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" gh-pages
